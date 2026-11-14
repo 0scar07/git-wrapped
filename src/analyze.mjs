@@ -117,7 +117,8 @@ export function analyze({ repos, year, authors, lang, name }) {
     insertions += add; deletions += del;
     // Un commit que añade y borra casi lo mismo a gran escala es un reformateo (saltos de línea, prettier…), no trabajo nuevo
     const reformat = add > 2000 && Math.abs(add - del) < Math.max(add, del) * 0.05;
-    if (!reformat && (!biggest || size > biggest.size)) biggest = { size, add, del, subject: c.subject };
+    // "más grande" = el que más código nuevo añadió (un commit que solo borra no es el que más trabajo tuvo)
+    if (!reformat && (!biggest || add > biggest.add)) biggest = { size, add, del, subject: c.subject };
   }
 
   // racha más larga y mejor día
