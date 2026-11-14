@@ -1,9 +1,15 @@
 # Changelog
 
-## 0.1.1 · 2026-11-14
+## 0.2.0 · 2026-11-14
 
+- **GitHub Action** (`uses: 0scar07/git-wrapped@v1`): puts your Wrapped GIF on your profile README every December, linked to the video with sound.
+- `--github <user>`: wrap any GitHub profile. Finds the repos pushed that year, clones them to a temp folder and analyzes them. A personal token adds private repos.
+- `--gif` and `--readme <file>` (GIF between `<!-- git-wrapped:start -->` markers).
+- January defaults to the previous year.
+- The analyzer skips generated files: Unity/Godot assets, hashed bundles and single-file changes over 10,000 lines.
+- GitHub noreply emails (with `+`) now match as plain text, case-insensitive.
 - Fix: in the closing card the logo could overlap the name, because the text was measured before the Inter font finished loading.
-- The npm package is now called `git-wrapped-video` (`npx git-wrapped-video`). Installed globally, it also gives you the `git-wrapped` command.
+- The npm package is now called `git-wrapped-video`. Installed globally, it also gives you the `git-wrapped` command.
 
 ## 0.1.0 · 2026-11-14
 

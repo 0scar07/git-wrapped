@@ -33,9 +33,60 @@ Ejecútalo dentro de cualquier repositorio de git. El video se guarda como `git-
 npx git-wrapped-video --scan ~/code
 ```
 
+O haz el Wrapped de cualquier perfil público de GitHub, sin clonar nada a mano:
+
+```bash
+npx git-wrapped-video --github torvalds
+```
+
 ¿Lo usas seguido? Instálalo una vez con `npm i -g git-wrapped-video` y ejecuta `git-wrapped` desde cualquier carpeta.
 
-**Tu código nunca sale de tu computadora.** Solo se lee `git log` en local. No se sube nada y no hace falta cuenta ni token.
+**Tu código nunca sale de tu computadora.** Solo se lee `git log` en local. No se sube nada y no hace falta cuenta ni token. (Con `--github` se leen datos públicos de la API de GitHub y esos repos se clonan en una carpeta temporal que se borra al terminar).
+
+## En tu perfil de GitHub
+
+Muestra tu año arriba de tu perfil, actualizado solo. En el repo de tu perfil (el que se llama como tu usuario), crea `.github/workflows/git-wrapped.yml`:
+
+```yaml
+name: git wrapped
+on:
+  schedule:
+    - cron: '0 12 20 12 *'   # cada 20 de diciembre
+  workflow_dispatch:          # o ejecútalo a mano desde la pestaña Actions
+
+permissions:
+  contents: write
+
+jobs:
+  wrapped:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: 0scar07/git-wrapped@v1
+        with:
+          lang: es
+          timezone: America/Bogota   # la tuya, para la hora pico
+```
+
+Genera tu video, el GIF y la tarjeta en `git-wrapped/` y pone el GIF en tu `README.md`, enlazado al video con sonido. Pon estas dos líneas donde lo quieras; si no, va al final:
+
+```md
+<!-- git-wrapped:start -->
+<!-- git-wrapped:end -->
+```
+
+| Entrada | Por defecto | Qué hace |
+|---|---|---|
+| `user` | dueño del repo | A quién hacerle el Wrapped |
+| `year` | el actual (en enero, el anterior) | Año |
+| `lang` | `en` | `en` o `es` |
+| `timezone` | `UTC` | Tu zona horaria, ej. `America/Bogota`, para que la hora pico sea la tuya (los runners usan UTC) |
+| `token` | `github.token` | Solo ve repos públicos. Para incluir privados, pasa un token personal *fine-grained* con **Contents** y **Metadata** en solo lectura, guardado como secreto |
+| `max-repos` | `15` | Cuántos de tus repos con push más reciente se analizan |
+| `readme` | `README.md` | README a actualizar (vacío para omitirlo) |
+| `output-dir` | `git-wrapped` | Dónde se guardan los archivos |
+| `vertical` | `false` | Genera también el video 9:16 |
+| `commit` | `true` | Hace commit y push de los resultados |
 
 **Requisitos:** Node.js 18.17+ y git. La primera vez tarda un par de minutos: npx instala el renderizador y descarga un Chrome sin interfaz (solo una vez).
 
@@ -60,6 +111,9 @@ Los **moods** salen de tu historial: Nocturno, Madrugador, Fin de semana, Refact
 | Opción | Qué hace |
 |---|---|
 | `--scan <carpeta>` | Busca repos de git dentro de una carpeta (2 niveles) |
+| `--github <usuario>` | Analiza los repos de un usuario de GitHub (se clonan en una carpeta temporal). Con `--token` o `GITHUB_TOKEN` incluye tus privados |
+| `--max-repos <n>` | Máximo de repos con `--github` (15 por defecto) |
+| `--tz <zona>` | Zona horaria para la hora pico, ej. `America/Bogota` (por defecto, la de tu sistema) |
 | `--year <aaaa>` | Año a analizar (por defecto, el actual) |
 | `--author <email>` | Tu email de git. Repítelo si usaste varios (por defecto, `git config user.email`) |
 | `--name <texto>` | Nombre que se muestra en el video |
@@ -68,6 +122,8 @@ Los **moods** salen de tu historial: Nocturno, Madrugador, Fin de semana, Refact
 | `--no-music` | Video sin audio |
 | `--vertical` | Video vertical 9:16 para TikTok, Reels y Shorts |
 | `--no-card` | No generar la imagen resumen PNG |
+| `--gif` | Genera también un GIF (para READMEs) |
+| `--readme <archivo>` | Pone el GIF en ese README, entre marcadores |
 | `--fps 30\|60` | Fotogramas por segundo (30 por defecto; 60 es más fluido y tarda el doble) |
 | `--blur` | Desenfoque de movimiento con 4 subfotogramas (unas 4 veces más lento) |
 | `--hq` | Máxima calidad: 60 fps + desenfoque de movimiento |

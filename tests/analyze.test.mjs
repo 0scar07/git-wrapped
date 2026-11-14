@@ -143,3 +143,14 @@ test('emails con "+" de GitHub se comparan literalmente', () => {
   const d = analyze({ repos: [repoA], year: 2026, authors: ['DEV@EXAMPLE.COM', '123+dev@users.noreply.github.com'], lang: 'es', name: 'Dev' });
   assert.equal(d.totals.commits, 10);
 });
+
+test('un reformateo grande (añade y borra casi lo mismo) no cuenta como commit más grande', async () => {
+  const dir = path.join(root, 'reformat');
+  const c = makeRepo(dir);
+  c('a.ts', 'uno\n'.repeat(300), 'feat: código real', '2026-04-01T10:00:00+00:00');
+  c('b.ts', 'x\n'.repeat(3000), 'chore: base', '2026-04-02T10:00:00+00:00');
+  execFileSync('git', ['-C', dir, 'rm', '-q', 'b.ts']);
+  c('c.ts', 'y\n'.repeat(3000), 'style: renombrar y normalizar', '2026-04-03T10:00:00+00:00');
+  const d = analyze({ repos: [dir], year: 2026, authors: [ME], lang: 'es', name: 'Dev' });
+  assert.notEqual(d.cards.biggest.subject, 'style: renombrar y normalizar');
+});

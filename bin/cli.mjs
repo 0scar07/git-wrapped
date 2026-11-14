@@ -18,6 +18,7 @@ const { values: o, positionals } = parseArgs({
     token: { type: 'string' },
     'max-repos': { type: 'string' },
     year: { type: 'string' },
+    tz: { type: 'string' },
     author: { type: 'string', multiple: true },
     name: { type: 'string' },
     lang: { type: 'string' },
@@ -40,7 +41,13 @@ const { values: o, positionals } = parseArgs({
   },
 });
 
-const sysLang = (Intl.DateTimeFormat().resolvedOptions().locale || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
+// Zona horaria para la hora pico y los días (en GitHub Actions el reloj está en UTC)
+if (o.tz) {
+  try { new Intl.DateTimeFormat('en', { timeZone: o.tz }); process.env.TZ = o.tz; }
+  catch { console.log(`--tz: "${o.tz}" no es una zona horaria válida (ej.: America/Bogota) / is not a valid time zone`); process.exit(1); }
+}
+
+const sysLang =(Intl.DateTimeFormat().resolvedOptions().locale || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
 const lang = o.lang === 'es' || o.lang === 'en' ? o.lang : sysLang;
 const es = lang === 'es';
 const say = (e, n) => console.log(es ? e : n);
@@ -58,6 +65,7 @@ if (o.help) {
   --token <token>     ${es ? 'Token de GitHub (o GITHUB_TOKEN); con tu token personal incluye repos privados' : 'GitHub token (or GITHUB_TOKEN); your personal token adds private repos'}
   --max-repos <n>     ${es ? 'Máximo de repos con --github (15 por defecto)' : 'Max repos with --github (default 15)'}
   --year <aaaa>       ${es ? 'Año a analizar (por defecto el actual; en enero, el anterior)' : 'Year to analyze (default: current; in January, the previous one)'}
+  --tz <zona>         ${es ? 'Zona horaria para la hora pico (ej.: America/Bogota; por defecto la del sistema)' : 'Time zone for the peak hour (e.g. America/New_York; default: system)'}
   --author <email>    ${es ? 'Tu email de git; se puede repetir (por defecto, user.email)' : 'Your git email, repeatable (default: user.email)'}
   --name <texto>      ${es ? 'Nombre que se muestra en el video' : 'Name shown in the video'}
   --lang es|en        ${es ? 'Idioma del video' : 'Video language'}

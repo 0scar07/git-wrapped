@@ -24,6 +24,7 @@ jobs:
         id: wrapped
         with:
           user: ${{ inputs.user || '0scar07' }}
+          timezone: America/Bogota
           readme: PROFILE.md
           output-dir: out
           commit: 'false'

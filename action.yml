@@ -15,6 +15,9 @@ inputs:
   lang:
     description: Video language, en or es.
     default: en
+  timezone:
+    description: Your time zone for the peak hour and days, e.g. America/New_York or Europe/Madrid. Runners use UTC.
+    default: UTC
   token:
     description: >-
       GitHub token. The default only sees public repos. To include private ones,
@@ -70,6 +73,7 @@ runs:
         GW_USER: ${{ inputs.user }}
         GW_YEAR: ${{ inputs.year }}
         GW_LANG: ${{ inputs.lang }}
+        GW_TZ: ${{ inputs.timezone }}
         GW_MAX: ${{ inputs.max-repos }}
         GW_DIR: ${{ inputs.output-dir }}
         GW_README: ${{ inputs.readme }}
@@ -82,7 +86,7 @@ runs:
         fi
         mkdir -p "$GW_DIR"
         cli="${{ github.action_path }}/bin/cli.mjs"
-        args=(--github "$GW_USER" --year "$year" --lang "$GW_LANG" --max-repos "$GW_MAX" -o "$GW_DIR/wrapped-$year.mp4" --gif)
+        args=(--github "$GW_USER" --year "$year" --lang "$GW_LANG" --tz "$GW_TZ" --max-repos "$GW_MAX" -o "$GW_DIR/wrapped-$year.mp4" --gif)
         if [ -n "$GW_README" ]; then args+=(--readme "$GW_README"); fi
         node "$cli" "${args[@]}"
         if [ "$GW_VERTICAL" = "true" ]; then

@@ -113,7 +113,9 @@ export function analyze({ repos, year, authors, lang, name }) {
     }
     for (const fo of folders) perFolder.set(fo, (perFolder.get(fo) || 0) + 1);
     insertions += add; deletions += del;
-    if (!biggest || size > biggest.size) biggest = { size, add, del, subject: c.subject };
+    // Un commit que añade y borra casi lo mismo a gran escala es un reformateo (saltos de línea, prettier…), no trabajo nuevo
+    const reformat = add > 2000 && Math.abs(add - del) < Math.max(add, del) * 0.05;
+    if (!reformat && (!biggest || size > biggest.size)) biggest = { size, add, del, subject: c.subject };
   }
 
   // racha más larga y mejor día
@@ -202,7 +204,7 @@ export function analyze({ repos, year, authors, lang, name }) {
     cards: {
       file: { path: topFile[0], count: topFile[1] },
       peak: { hour: peak },
-      biggest: { add: biggest.add, del: biggest.del, subject: biggest.subject },
+      biggest: { add: biggest?.add ?? 0, del: biggest?.del ?? 0, subject: biggest?.subject ?? '' },
       bestDay: { date: bestDay[0], count: bestDay[1] },
     },
     log,

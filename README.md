@@ -33,9 +33,59 @@ Got several projects? Point it at the folder that holds them:
 npx git-wrapped-video --scan ~/code
 ```
 
+Or wrap any public GitHub profile, no clone needed:
+
+```bash
+npx git-wrapped-video --github torvalds
+```
+
 Use it often? Install it once with `npm i -g git-wrapped-video` and run `git-wrapped` from anywhere.
 
-**Your code never leaves your machine.** It only reads `git log` locally. Nothing is uploaded, and no account or token is needed.
+**Your code never leaves your machine.** It only reads `git log` locally. Nothing is uploaded, and no account or token is needed. (With `--github`, it reads public data from the GitHub API and clones those repos to a temp folder that is deleted afterwards.)
+
+## On your GitHub profile
+
+Show your year at the top of your profile, updated automatically. In your profile repo (the one named after your username), add `.github/workflows/git-wrapped.yml`:
+
+```yaml
+name: git wrapped
+on:
+  schedule:
+    - cron: '0 12 20 12 *'   # every December 20
+  workflow_dispatch:          # or run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  wrapped:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: 0scar07/git-wrapped@v1
+        with:
+          timezone: America/New_York   # yours, for the peak hour
+```
+
+It renders your video, GIF and card into `git-wrapped/` and puts the GIF in your `README.md`, linked to the video with sound. Put these two lines where you want it; otherwise it goes at the end:
+
+```md
+<!-- git-wrapped:start -->
+<!-- git-wrapped:end -->
+```
+
+| Input | Default | What it does |
+|---|---|---|
+| `user` | repo owner | Who to wrap |
+| `year` | current (previous in January) | Year to wrap |
+| `lang` | `en` | `en` or `es` |
+| `timezone` | `UTC` | Your time zone, e.g. `America/New_York`, so the peak hour is right (runners use UTC) |
+| `token` | `github.token` | Only sees public repos. For private ones, pass a fine-grained personal token with read-only **Contents** and **Metadata**, stored as a secret |
+| `max-repos` | `15` | How many of your most recently pushed repos to analyze |
+| `readme` | `README.md` | README to update (empty to skip) |
+| `output-dir` | `git-wrapped` | Where the files go |
+| `vertical` | `false` | Also render a 9:16 video |
+| `commit` | `true` | Commit and push the results |
 
 **Requirements:** Node.js 18.17+ and git. The first run takes a couple of minutes: npx installs the renderer and downloads a headless Chrome (only once).
 
@@ -60,6 +110,9 @@ Use it often? Install it once with `npm i -g git-wrapped-video` and run `git-wra
 | Flag | What it does |
 |---|---|
 | `--scan <dir>` | Find git repos inside a folder (2 levels deep) |
+| `--github <user>` | Wrap a GitHub user's repos (cloned to a temp folder). `--token` or `GITHUB_TOKEN` adds your private ones |
+| `--max-repos <n>` | Max repos with `--github` (default 15) |
+| `--tz <zone>` | Time zone for the peak hour, e.g. `America/New_York` (default: your system's) |
 | `--year <yyyy>` | Year to analyze (default: current year) |
 | `--author <email>` | Your git email. Repeat it if you used several (default: `git config user.email`) |
 | `--name <text>` | Name shown in the video |
@@ -68,6 +121,8 @@ Use it often? Install it once with `npm i -g git-wrapped-video` and run `git-wra
 | `--no-music` | Silent video |
 | `--vertical` | Vertical 9:16 video for TikTok, Reels and Shorts |
 | `--no-card` | Skip the PNG summary card |
+| `--gif` | Also make a GIF (for READMEs) |
+| `--readme <file>` | Put the GIF into that README between markers |
 | `--fps 30\|60` | Frame rate (default 30; 60 is smoother and takes twice as long) |
 | `--blur` | Motion blur with 4 subframes (about 4x slower) |
 | `--hq` | Best quality: 60 fps + motion blur |
