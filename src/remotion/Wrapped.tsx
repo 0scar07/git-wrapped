@@ -3,6 +3,7 @@ import { AbsoluteFill, Audio, interpolate, staticFile, useCurrentFrame, useVideo
 import { loadFont as loadInter } from '@remotion/google-fonts/Inter';
 import { loadFont as loadMono } from '@remotion/google-fonts/JetBrainsMono';
 import { measureText } from '@remotion/layout-utils';
+import { CameraMotionBlur } from '@remotion/motion-blur';
 import { fmt, strings } from './strings';
 
 const WORDMARK = 'git wrapped';
@@ -28,11 +29,11 @@ const S = ({ x = 0, y = 0, s = 1, o = 1, r = 0, blur = 0 }: Tr): CSSProperties =
   filter: blur > 0.05 ? `blur(${blur}px)` : undefined,
 });
 
-const LEVELS = ['#1c1c25', '#3B2F7A', '#5B47C9', '#8473F5', '#B9AEFF'];
+export const LEVELS = ['#1c1c25', '#3B2F7A', '#5B47C9', '#8473F5', '#B9AEFF'];
 const COVERS = ['cv1', 'cv2', 'cv3', 'cv4', 'cv5'];
 const MOOD_COVERS = ['cv5', 'cv4', 'cv2', 'cv3', 'cv1'];
 
-function demoGraph() {
+export function demoGraph() {
   let sd = 7;
   const rnd = () => (sd = (sd * 9301 + 49297) % 233280) / 233280;
   const g: number[] = [];
@@ -54,27 +55,44 @@ const shortPath = (p: string) => {
 };
 const fit = (text: string, width: number, max: number, k = 0.56) => Math.min(max, width / (Math.max(1, text.length) * k));
 
-export const Wrapped: React.FC<Props> = ({ data, music }) => {
-  const frame = useCurrentFrame();
+export const Wrapped: React.FC<Props> = ({ data, music, motionBlur }) => {
   const { fps } = useVideoConfig();
+  return (
+    <AbsoluteFill style={{ background: '#050507' }}>
+      {/* desenfoque de movimiento: 4 subfotogramas, obturador de 180° */}
+      {motionBlur ? <CameraMotionBlur samples={4} shutterAngle={180}><Scene data={data} /></CameraMotionBlur> : <Scene data={data} />}
+      {music ? <Audio src={staticFile(music)} volume={f => interpolate(f, [fps * 16.8, fps * 18], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })} /> : null}
+    </AbsoluteFill>
+  );
+};
+
+const Scene: React.FC<{ data: Props['data'] }> = ({ data }) => {
+  const frame = useCurrentFrame();
+  const { fps, width, height } = useVideoConfig();
   const t = frame / fps;
   const s = strings(data.lang);
+  // Vertical (9:16): mismo guion, con tamaños y posiciones adaptados al escenario alto
+  const V = height > width;
+  const HW = (width - 128) / 2, HH = (height - 128) / 2;
+  const gs = V ? 0.62 : 1; // escala de la gráfica
+  const big = V ? 124 : 150;
   const graph = useMemo(() => (data.graph?.length === 364 ? data.graph : demoGraph()), [data.graph]);
   const maxDay = Math.max(1, ...data.weekdays);
   const langMax = Math.max(1, ...data.languages.map(l => l.pct));
 
   // A · intro --------------------------------------------------------------
   const kL = up(t, 0.55, 0.95);
-  const logo = S({ x: L(0, -896 + 80, kL), y: L(0, -476 + 80, kL), s: t < 0.55 ? L(0, 1, up(t, 0, 0.5)) : L(1, 0.42, kL), o: (t < 0.02 ? 0 : 1) * (1 - up(t, 13.7, 14)) });
+  const logo = S({ x: L(0, -HW + 80, kL), y: L(0, -HH + 80, kL), s: t < 0.55 ? L(0, 1, up(t, 0, 0.5)) : L(1, 0.42, kL), o: (t < 0.02 ? 0 : 1) * (1 - up(t, 13.7, 14)) });
   // B · ventana
   const bIn = up(t, 1.5, 2.05), bZ = up(t, 2.45, 3.1), bOut = up(t, 3.15, 3.45);
   // D · búsqueda
   const q = data.star.name, nTyped = Math.floor(lin(t, 5.05, 5.75) * q.length + 1e-4);
   const sOut = up(t, 6.1, 6.3);
   // E · portada
-  let hx = L(-395, 0, up(t, 6.1, 6.6)), hy = L(10, 0, up(t, 6.1, 6.6)), hs = L(80 / 420, 1, up(t, 6.1, 6.6));
-  const kS = up(t, 6.6, 7.1); hx = L(hx, -500, kS); hy = L(hy, -40, kS);
-  const kM = up(t, 7.8, 8.3); hx = L(hx, 14, kM); hy = L(hy, 0, kM); hs = L(hs, 22 / 420, kM);
+  const rs = V ? 0.9 : 1; // escala de búsqueda y resultado
+  let hx = L(-395 * rs, 0, up(t, 6.1, 6.6)), hy = L(10, 0, up(t, 6.1, 6.6)), hs = L((80 * rs) / 420, 1, up(t, 6.1, 6.6));
+  const kS = up(t, 6.6, 7.1); hx = L(hx, V ? 0 : -500, kS); hy = L(hy, V ? -330 : -40, kS);
+  const kM = up(t, 7.8, 8.3); hx = L(hx, 14 * gs, kM); hy = L(hy, 0, kM); hs = L(hs, (22 * gs) / 420, kM);
   const ho = up(t, 5.85, 6.05) * (1 - up(t, 8.15, 8.3));
   // F · zoom
   const kZ = up(t, 8.4, 9.75, ei);
@@ -95,6 +113,8 @@ export const Wrapped: React.FC<Props> = ({ data, music }) => {
   const total = data.totals.commits;
 
   const c = data.cards;
+  const pos = V ? [[-170, -540, -4], [170, -200, 3], [-170, 140, -2], [170, 480, 4]] : [[-430, -175, -4], [400, -205, 3], [-380, 195, -2], [430, 175, 4]];
+  const cs = V ? 0.85 : 1;
   const cards: [number, number, number, React.ReactNode][] = [
     [-430, -175, -4, <><div className="k">{s.fileK}</div><div className="m" style={{ fontSize: 30, color: '#fff' }}>{shortPath(c.file.path)}</div><span className="chip">{s.changes(c.file.count)}</span></>],
     [400, -205, 3, <><div className="k">{s.peakK}</div><div className="v">{s.hour(c.peak.hour)}</div><span className="chip">{s.peakMood(c.peak.hour)}</span></>],
@@ -107,15 +127,14 @@ export const Wrapped: React.FC<Props> = ({ data, music }) => {
   return (
     <AbsoluteFill style={{ fontFamily: inter, color: '#fff', background: '#050507' }}>
       <style>{css(mono)}</style>
-      {music ? <Audio src={staticFile(music)} volume={f => interpolate(f, [0, fps * 0.5, fps * 16.5, fps * 18], [0, 0.9, 0.9, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })} /> : null}
       <div className="bg" />
       <div className="stage">
         {/* A */}
-        <div className="el" style={S({ y: L(-50, -80, up(t, 0.7, 1.05)), o: win(t, 0.7, 1, 1.25, 1.45) })}><h1 className="big">{s.intro1(data.year)}</h1></div>
-        <div className="el" style={S({ y: L(110, 80, up(t, 0.85, 1.2)), o: win(t, 0.85, 1.15, 1.3, 1.5) })}><h1 className="big acc">{s.intro2}</h1></div>
+        <div className="el" style={S({ y: L(-50, -80, up(t, 0.7, 1.05)), o: win(t, 0.7, 1, 1.25, 1.45) })}><h1 className="big" style={{ fontSize: big }}>{s.intro1(data.year)}</h1></div>
+        <div className="el" style={S({ y: L(110, 80, up(t, 0.85, 1.2)), o: win(t, 0.85, 1.15, 1.3, 1.5) })}><h1 className="big acc" style={{ fontSize: big }}>{s.intro2}</h1></div>
 
         {/* B */}
-        <div className="el" style={S({ y: L(720, 0, bIn) - L(0, 55, bZ), s: L(1, 1.12, bZ) * L(1, 0.88, bOut), o: bIn * (1 - bOut) })}>
+        <div className="el" style={S({ y: L(V ? 1150 : 720, 0, bIn) - L(0, V ? 0 : 55, bZ), s: (V ? 0.7 : 1) * L(1, 1.12, bZ) * L(1, 0.88, bOut), o: bIn * (1 - bOut) })}>
           <div className="win">
             <div className="bar"><i /><i /><i /></div>
             <div className="ttl"><span style={{ opacity: 1 - up(t, 2.3, 2.5) }}>{s.madeForYou}</span><span style={{ opacity: up(t, 2.4, 2.6) }}>{ttl}</span></div>
@@ -128,7 +147,7 @@ export const Wrapped: React.FC<Props> = ({ data, music }) => {
         </div>
 
         {/* C */}
-        <div className="el" style={S({ y: L(40, 0, up(t, 3.25, 3.6)), o: win(t, 3.25, 3.55, 3.95, 4.15) })}>
+        <div className="el" style={S({ y: L(40, 0, up(t, 3.25, 3.6)), s: V ? 0.86 : 1, o: win(t, 3.25, 3.55, 3.95, 4.15) })}>
           <div className="langs">
             <h1 style={{ fontSize: 64, letterSpacing: -2, marginBottom: 20 }}>{s.langs}</h1>
             {data.languages.map((l, i) => (
@@ -139,24 +158,24 @@ export const Wrapped: React.FC<Props> = ({ data, music }) => {
           </div>
         </div>
         {(() => { const mIn = up(t, 4.05, 4.5), mOut = up(t, 4.72, 4.92); return (<>
-          <div className="el" style={S({ y: -250, o: mIn * (1 - mOut) })}><h1 style={{ fontSize: 64, letterSpacing: -2 }}>{s.moodsTitle}</h1></div>
-          <div className="el" style={S({ x: L(380, 0, mIn) - lin(t, 4.5, 4.92) * 60, y: 40, o: mIn * (1 - mOut) })}>
+          <div className="el" style={S({ y: V ? -200 : -250, o: mIn * (1 - mOut) })}><h1 style={{ fontSize: 64, letterSpacing: -2 }}>{s.moodsTitle}</h1></div>
+          <div className="el" style={S({ x: L(380, 0, mIn) - lin(t, 4.5, 4.92) * 60, y: V ? 20 : 40, s: V ? 0.68 : 1, o: mIn * (1 - mOut) })}>
             <div className="moods">{data.moods.slice(0, 5).map((m, i) => <div key={m} className={`mood cv ${MOOD_COVERS[i]}`}><span>{s.moods[m] ?? m}</span></div>)}</div>
           </div></>); })()}
 
         {/* D */}
-        <div className="el" style={S({ y: L(-90, -120, up(t, 4.9, 5.2)), o: up(t, 4.9, 5.15) * (1 - sOut) })}>
+        <div className="el" style={S({ y: L(-90, -120, up(t, 4.9, 5.2)), s: rs, o: up(t, 4.9, 5.15) * (1 - sOut) })}>
           <div className="search">
             <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#8A8A99" strokeWidth="2.4" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
             <span>{q.slice(0, nTyped)}</span><span className="caret" style={{ opacity: t > 5.8 ? Math.floor(t * 3) % 2 : 1 }} />
           </div>
         </div>
-        <div className="el" style={S({ y: L(30, 10, up(t, 5.85, 6.05)), o: up(t, 5.85, 6.05) * (1 - sOut) })}>
+        <div className="el" style={S({ y: L(30, 10, up(t, 5.85, 6.05)), s: rs, o: up(t, 5.85, 6.05) * (1 - sOut) })}>
           <div className="result"><div className="ph" /><div><b>{q}</b><span>{s.repo} · {data.user.name}</span></div></div>
         </div>
 
         {/* E */}
-        <div className="el" style={S({ x: L(380, 330, up(t, 6.8, 7.2)), y: -30, o: win(t, 6.8, 7.15, 7.65, 7.85) })}>
+        <div className="el" style={S({ x: V ? 0 : L(380, 330, up(t, 6.8, 7.2)), y: V ? L(330, 290, up(t, 6.8, 7.2)) : -30, o: win(t, 6.8, 7.15, 7.65, 7.85) })}>
           <div style={{ width: 720 }}>
             <div className="sub" style={{ fontSize: 24, fontWeight: 600, letterSpacing: 3 }}>{s.starLabel}</div>
             <h1 style={{ fontSize: fit(q, 720, 104), marginTop: 10 }}>{q}</h1>
@@ -170,7 +189,7 @@ export const Wrapped: React.FC<Props> = ({ data, music }) => {
           </div>
         </div>
         <div className="flash" style={{ opacity: up(t, 7.5, 7.65) * 0.9 * (1 - up(t, 7.68, 7.98)) }} />
-        <div className="el" style={S({ s: L(1, 7, kZ), o: (t > 7.8 ? 1 : 0) * (1 - up(t, 9.5, 9.8)), blur: L(0, 16, up(t, 8.8, 9.75, ei)) })}>
+        <div className="el" style={S({ s: gs * L(1, 7, kZ), o: (t > 7.8 ? 1 : 0) * (1 - up(t, 9.5, 9.8)), blur: L(0, 16, up(t, 8.8, 9.75, ei)) })}>
           <div className="graph">
             {graph.map((lv, i) => { const col = Math.floor(i / 7), row = i % 7, d = Math.abs(col - 26) * 0.012 + row * 0.005;
               return <i key={i} style={{ background: LEVELS[lv] ?? LEVELS[0], opacity: up(t, 7.85 + d, 8.05 + d) }} />; })}
@@ -179,28 +198,28 @@ export const Wrapped: React.FC<Props> = ({ data, music }) => {
         <div className="el" style={S({ x: hx, y: hy, s: hs, o: ho })}><div className="cv cv1" style={{ width: 420, height: 420, borderRadius: 30 }} /></div>
 
         {/* G */}
-        <div className="el" style={S({ y: L(-70, -110, up(t, 9.8, 10.15)), o: win(t, 9.8, 10.1, 10.95, 11.1) })}><h1 className="big">{s.rhythm1}</h1></div>
-        <div className="el" style={S({ y: L(80, 40, up(t, 9.95, 10.3)), o: win(t, 9.95, 10.25, 11, 11.15) })}><h1 className="big acc">{s.rhythm2}</h1></div>
+        <div className="el" style={S({ y: L(-70, -110, up(t, 9.8, 10.15)), o: win(t, 9.8, 10.1, 10.95, 11.1) })}><h1 className="big" style={{ fontSize: big }}>{s.rhythm1}</h1></div>
+        <div className="el" style={S({ y: L(80, 40, up(t, 9.95, 10.3)), o: win(t, 9.95, 10.25, 11, 11.15) })}><h1 className="big acc" style={{ fontSize: big }}>{s.rhythm2}</h1></div>
         <div className="el" style={S({ y: L(220, 190, up(t, 10.25, 10.55)), o: win(t, 10.25, 10.5, 10.95, 11.1) })}><span className="chip">{s.streak(data.streak.days)}</span></div>
 
         {/* H */}
-        <div className="el" style={S({ y: -300, o: up(t, 11.2, 11.45) * (1 - hOut) })}><h1 style={{ fontSize: 64, letterSpacing: -2 }}>{s.weekTitle}</h1></div>
-        <div className="el" style={S({ y: L(80, 40, up(t, 11.2, 11.5)), o: up(t, 11.2, 11.4) * (1 - hOut), s: L(0.94, 1, up(t, 11.2, 12)) })}>
+        <div className="el" style={S({ y: V ? -340 : -300, o: up(t, 11.2, 11.45) * (1 - hOut) })}><h1 style={{ fontSize: 64, letterSpacing: -2 }}>{s.weekTitle}</h1></div>
+        <div className="el" style={S({ y: L(80, 40, up(t, 11.2, 11.5)), o: up(t, 11.2, 11.4) * (1 - hOut), s: (V ? 0.84 : 1) * L(0.94, 1, up(t, 11.2, 12)) })}>
           <div className="week">{data.weekdays.map((v, i) => { const d = Math.abs(i - 3) * 0.09;
             return <div className="wb" key={i}><div className="b" style={{ height: (v / maxDay) * 300 * up(t, 11.35 + d, 11.85 + d) }} />{s.days[i]}</div>; })}</div>
         </div>
 
         {/* I/J */}
-        {cards.map(([x, y, r, body], i) => { const a = up(t, 12.5 + i * 0.1, 12.95 + i * 0.1), fl = Math.sin(t * 2.2 + i * 1.7) * 10;
-          return <div key={i} className="el" style={S({ x: L(x, 0, kC), y: L(y + L(60, 0, a) + fl, 0, kC), r: L(r, 0, kC), s: L(0.85, 1, a) * L(1, 0.12, kC), o: a * (1 - up(t, 14.35, 14.6)) })}><div className="fcard">{body}</div></div>; })}
+        {cards.map(([, , , body], i) => { const [x, y, r] = pos[i]; const a = up(t, 12.5 + i * 0.1, 12.95 + i * 0.1), fl = Math.sin(t * 2.2 + i * 1.7) * 10;
+          return <div key={i} className="el" style={S({ x: L(x, 0, kC), y: L(y + L(60, 0, a) + fl, 0, kC), r: L(r, 0, kC), s: cs * L(0.85, 1, a) * L(1, 0.12, kC), o: a * (1 - up(t, 14.35, 14.6)) })}><div className="fcard">{body}</div></div>; })}
 
         {/* K */}
         <div className="el" style={S({ x: wordX + L(-60, 0, kK), y: -100, o: up(t, 15.35, 15.8) })}><h1 style={{ fontSize: 116, letterSpacing: -4 }}>{WORDMARK}</h1></div>
-        <div className="el" style={S({ y: L(60, 40, up(t, 15.6, 16)), o: up(t, 15.6, 16) })}><div style={{ fontSize: 54, fontWeight: 700, letterSpacing: -1, whiteSpace: 'nowrap' }}>{s.tag1(data.year)} <span className="acc">{s.tag2}</span></div></div>
+        <div className="el" style={S({ y: L(60, 40, up(t, 15.6, 16)), o: up(t, 15.6, 16) })}><div style={{ fontSize: V ? 44 : 54, fontWeight: 700, letterSpacing: -1, whiteSpace: 'nowrap' }}>{s.tag1(data.year)} <span className="acc">{s.tag2}</span></div></div>
         <div className="el" style={S({ y: L(180, 160, up(t, 15.85, 16.25)), o: up(t, 15.85, 16.25) })}><div className="cmd"><span className="sub">$ </span>npx <span className="acc">git-wrapped</span></div></div>
 
         {/* terminal */}
-        <div className="el" style={S({ y: L(536, 396, up(t, 1.9, 2.3)), o: up(t, 1.9, 2.3) * (1 - up(t, 12.15, 12.45)) })}>
+        <div className="el" style={S({ y: L(HH + 60, HH - 80, up(t, 1.9, 2.3)), s: V ? 0.76 : 1, o: up(t, 1.9, 2.3) * (1 - up(t, 12.15, 12.45)) })}>
           <div className="term"><span className="dots"><i /><i /><i /></span><span className="hash">{line.hash}</span><span className="msg">{line.msg}</span>
             <span className="prog"><div style={{ width: `${tp * 100}%` }} /></span><span className="count">{Math.round(tp * total)} / {total}</span></div>
         </div>
@@ -211,16 +230,16 @@ export const Wrapped: React.FC<Props> = ({ data, music }) => {
   );
 };
 
-const Logo = () => (
-  <div className="logo">
-    <svg width="86" height="86" viewBox="0 0 100 100">
-      <path d="M34 18 V82" stroke="#fff" strokeWidth="9" strokeLinecap="round" fill="none" />
-      <path d="M34 62 C34 44 66 50 66 32" stroke="#fff" strokeWidth="9" strokeLinecap="round" fill="none" />
-      <circle cx="34" cy="80" r="10" fill="#fff" />
-      <circle cx="66" cy="26" r="12" fill="#0B0B10" stroke="#fff" strokeWidth="8" />
-    </svg>
-  </div>
+export const Mark = ({ size = 86 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100">
+    <path d="M34 18 V82" stroke="#fff" strokeWidth="9" strokeLinecap="round" fill="none" />
+    <path d="M34 62 C34 44 66 50 66 32" stroke="#fff" strokeWidth="9" strokeLinecap="round" fill="none" />
+    <circle cx="34" cy="80" r="10" fill="#fff" />
+    <circle cx="66" cy="26" r="12" fill="#0B0B10" stroke="#fff" strokeWidth="8" />
+  </svg>
 );
+
+const Logo = () => <div className="logo"><Mark /></div>;
 
 const css = (mono: string) => `
   :root{--acc:#9D8CFF;--acc2:#5EE6D0;--sub:#8A8A99;--card:#15151D;--line:#24242F}

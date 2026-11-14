@@ -22,4 +22,4 @@ export type WrappedData = {
   log: { hash: string; msg: string }[];
 };
 
-export type Props = { data: WrappedData; fps?: number; music?: string | null };
+export type Props = { data: WrappedData; fps?: number; music?: string | null; motionBlur?: boolean; vertical?: boolean; size?: [number, number] };

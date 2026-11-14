@@ -8,12 +8,16 @@
   },
   "files": [
     "bin",
-    "src"
+    "src",
+    "assets",
+    "scripts"
   ],
   "scripts": {
-    "studio": "remotion studio src/remotion/index.ts",
+    "studio": "remotion studio src/remotion/index.ts --public-dir=assets",
     "demo": "node bin/cli.mjs --demo",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "music": "node scripts/make-music.mjs && ffmpeg -y -loglevel error -i assets/music.wav -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a libmp3lame -b:a 192k assets/music.mp3 && node -e \"require('fs').unlinkSync('assets/music.wav')\"",
+    "test": "node --test tests/analyze.test.mjs"
   },
   "keywords": [
     "git",
@@ -33,6 +37,7 @@
     "@remotion/cli": "4.0.543",
     "@remotion/google-fonts": "4.0.543",
     "@remotion/layout-utils": "4.0.543",
+    "@remotion/motion-blur": "4.0.543",
     "@remotion/renderer": "4.0.543",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -41,5 +46,14 @@
   "devDependencies": {
     "@types/react": "^19.3.0",
     "typescript": "^7.0.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0scar07/git-wrapped.git"
+  },
+  "homepage": "https://github.com/0scar07/git-wrapped#readme",
+  "bugs": {
+    "url": "https://github.com/0scar07/git-wrapped/issues"
+  },
+  "author": "0scar07"
 }

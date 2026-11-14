@@ -51,8 +51,9 @@ export function gitIdentity(dir) {
 }
 
 function readCommits(repo, year, authors) {
-  const args = ['log', '--no-merges', `--since=${year}-01-01T00:00:00`, `--until=${year + 1}-01-01T00:00:00`,
-    '--format=%x1e%H%x1f%at%x1f%s', '--numstat'];
+  // Sin --since/--until: git deja de recorrer el historial en cuanto ve un commit más antiguo,
+  // y con fechas desordenadas (rebase, cherry-pick) se perderían commits. Se filtra por fecha de autor abajo.
+  const args = ['log', '--branches', '--remotes', '--tags', '--no-merges', '--format=%x1e%H%x1f%at%x1f%s', '--numstat'];
   for (const a of authors) args.push(`--author=${a}`);
   let raw = '';
   try { raw = git(repo, args); } catch { return []; }
@@ -70,7 +71,7 @@ function readCommits(repo, year, authors) {
       files.push({ add: +m[1], del: +m[2], path: p });
     }
     return { repo, hash, at: +at * 1000, subject: subject || '', files };
-  });
+  }).filter(c => new Date(c.at).getFullYear() === year);
 }
 
 const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -116,10 +117,15 @@ export function analyze({ repos, year, authors, lang, name }) {
   const repoName = r => path.basename(path.resolve(r));
   let reposLabel = 'repos';
   let top = [...perRepo.entries()].sort((a, b) => b[1] - a[1]).map(([r, n]) => ({ name: repoName(r), commits: n }));
-  if (top.length < 3) {
+  const folders = [...perFolder.entries()].filter(([f]) => f !== '/').sort((a, b) => b[1] - a[1]);
+  if (top.length === 1) {
+    // un solo repo: se muestran sus carpetas más activas
     reposLabel = 'folders';
-    top = [...perFolder.entries()].filter(([f]) => f !== '/').sort((a, b) => b[1] - a[1]).map(([f, n]) => ({ name: f, commits: n }));
-    if (top.length < 3) top.push(...[...perRepo.entries()].map(([r, n]) => ({ name: repoName(r), commits: n })));
+    top = folders.map(([f, n]) => ({ name: f, commits: n }));
+    if (top.length < 3) { const [only, n] = [...perRepo.entries()][0]; top.push({ name: repoName(only), commits: n }); }
+  } else if (top.length === 2 && folders.length) {
+    // dos repos: el tercer hueco es la carpeta más activa
+    top.push({ name: folders[0][0], commits: folders[0][1] });
   }
   top = top.slice(0, 3).map((r, i) => ({ ...r, cover: i }));
 

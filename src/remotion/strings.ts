@@ -17,6 +17,8 @@ const S = {
     biggestK: 'Commit más grande', bestDayK: 'Tu mejor día',
     date: (iso: string) => { const [, m, d] = iso.split('-').map(Number); return `${d} ${['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][m - 1]}`; },
     tag1: (y: number) => `Tu ${y} en código`, tag2: 'ya está aquí',
+    streakK: 'racha más larga', topLangK: 'lenguaje top', days_: (n: number) => `${n} ${n === 1 ? 'día' : 'días'}`,
+    cardTitle1: (y: number) => `Mi ${y}`, cardTitle2: 'en código', topRepoK: 'Repo estrella', makeYours: 'Haz el tuyo',
   },
   en: {
     intro1: (y: number) => `Your ${y}`, intro2: 'in code',
@@ -34,6 +36,8 @@ const S = {
     biggestK: 'Biggest commit', bestDayK: 'Your best day',
     date: (iso: string) => { const [, m, d] = iso.split('-').map(Number); return `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1]} ${d}`; },
     tag1: (y: number) => `Your ${y} in code`, tag2: 'is here',
+    streakK: 'longest streak', topLangK: 'top language', days_: (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`,
+    cardTitle1: (y: number) => `My ${y}`, cardTitle2: 'in code', topRepoK: 'Top repo', makeYours: 'Make yours',
   },
 };
 

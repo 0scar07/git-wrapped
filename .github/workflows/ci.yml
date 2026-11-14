@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: CLI smoke test
+        run: |
+          node bin/cli.mjs --version
+          node bin/cli.mjs --demo --json --lang en
+
+  render:
+    name: Render demo video
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Render (sample data)
+        run: node bin/cli.mjs --demo --lang en -o out/demo.mp4
+      - name: Render vertical (sample data)
+        run: node bin/cli.mjs --demo --lang en --vertical --no-card -o out/demo-vertical.mp4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-videos
+          path: out/
+          retention-days: 7

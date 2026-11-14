@@ -22,6 +22,11 @@ const { values: o, positionals } = parseArgs({
     fps: { type: 'string' },
     gl: { type: 'string' },
     music: { type: 'string' },
+    'no-music': { type: 'boolean' },
+    blur: { type: 'boolean' },
+    vertical: { type: 'boolean' },
+    'no-card': { type: 'boolean' },
+    hq: { type: 'boolean' },
     json: { type: 'boolean' },
     data: { type: 'string' },
     demo: { type: 'boolean' },
@@ -47,8 +52,13 @@ if (o.help) {
   --author <email>    ${es ? 'Tu email de git; se puede repetir (por defecto, user.email)' : 'Your git email, repeatable (default: user.email)'}
   --name <texto>      ${es ? 'Nombre que se muestra en el video' : 'Name shown in the video'}
   --lang es|en        ${es ? 'Idioma del video' : 'Video language'}
-  --music <archivo>   ${es ? 'Música de fondo (mp3/wav)' : 'Background music (mp3/wav)'}
-  --fps 30|60         ${es ? 'Fotogramas por segundo (30 por defecto; 60 = más fluido y el doble de lento)' : 'Frames per second (default 30; 60 = smoother, twice as slow)'}
+  --music <archivo>   ${es ? 'Tu propia música (mp3/wav) en vez de la incluida' : 'Your own music (mp3/wav) instead of the bundled track'}
+  --no-music          ${es ? 'Video sin audio' : 'Silent video'}
+  --vertical          ${es ? 'Formato vertical 9:16 para TikTok, Reels y Shorts' : 'Vertical 9:16 for TikTok, Reels and Shorts'}
+  --no-card           ${es ? 'No generar la imagen resumen PNG' : "Don't make the PNG summary card"}
+  --fps 30|60       ${es ? 'Fotogramas por segundo (30 por defecto; 60 = más fluido y el doble de lento)' : 'Frames per second (default 30; 60 = smoother, twice as slow)'}
+  --blur              ${es ? 'Desenfoque de movimiento (4 subfotogramas; unas 4 veces más lento)' : 'Motion blur (4 subframes; about 4x slower)'}
+  --hq                ${es ? 'Máxima calidad: 60 fps + desenfoque de movimiento' : 'Best quality: 60 fps + motion blur'}
   --gl <modo>         ${es ? 'Renderizado de Chrome: angle (GPU), swangle, default…' : 'Chrome rendering: angle (GPU), swangle, default…'}
   -o, --out <archivo> ${es ? 'Archivo de salida' : 'Output file'}
   --json              ${es ? 'Solo imprime los datos, sin renderizar' : 'Print the data only, no render'}
@@ -84,18 +94,23 @@ if (o.json) { console.log(JSON.stringify(data, null, 2)); process.exit(0); }
 say(`${data.totals.commits} commits · ${data.totals.activeDays} días activos · racha de ${data.streak.days} días`,
   `${data.totals.commits} commits · ${data.totals.activeDays} active days · ${data.streak.days}-day streak`);
 
-const fps = o.fps === '60' ? 60 : 30;
-const out = path.resolve(o.out || `git-wrapped-${data.year}.mp4`);
+const fps = o.hq || o.fps === '60' ? 60 : 30;
+const motionBlur = Boolean(o.hq || o.blur);
+const out = path.resolve(o.out || `git-wrapped-${data.year}${o.vertical ? '-vertical' : ''}.mp4`);
 const publicDir = mkdtempSync(path.join(tmpdir(), 'git-wrapped-'));
 let music = null;
-if (o.music) { music = 'music' + path.extname(o.music); copyFileSync(path.resolve(o.music), path.join(publicDir, music)); }
+if (!o['no-music']) {
+  const src = o.music ? path.resolve(o.music) : path.join(root, 'assets/music.mp3');
+  music = 'music' + path.extname(src);
+  copyFileSync(src, path.join(publicDir, music));
+}
 
 const { bundle } = await import('@remotion/bundler');
-const { renderMedia, selectComposition } = await import('@remotion/renderer');
+const { renderMedia, renderStill, selectComposition } = await import('@remotion/renderer');
 
 say('Preparando el video…', 'Preparing the video…');
 const serveUrl = await bundle({ entryPoint: path.join(root, 'src/remotion/index.ts'), publicDir });
-const inputProps = { data, fps, music };
+const inputProps = { data, fps, music, motionBlur, vertical: Boolean(o.vertical) };
 const composition = await selectComposition({ serveUrl, id: 'Wrapped', inputProps });
 // La GPU (ANGLE) duplica la velocidad en Windows y macOS; en Linux sin GPU se usa el modo por defecto.
 const gl = o.gl ?? (process.platform === 'linux' ? null : 'angle');
@@ -118,7 +133,15 @@ try {
   say('\nLa aceleración por GPU falló; reintento sin ella…', '\nGPU acceleration failed; retrying without it…');
   await render(null);
 }
-writeFileSync(out.replace(/\.mp4$/i, '') + '.json', JSON.stringify(data, null, 2));
+const base = out.replace(/\.mp4$/i, '');
+writeFileSync(base + '.json', JSON.stringify(data, null, 2));
 console.log('');
+if (!o['no-card']) {
+  const cardProps = { data };
+  const card = await selectComposition({ serveUrl, id: 'Card', inputProps: cardProps });
+  await renderStill({ composition: card, serveUrl, inputProps: cardProps, output: base + '.png',
+    chromiumOptions: gl && gl !== 'default' ? { gl } : {} }).catch(() => renderStill({ composition: card, serveUrl, inputProps: cardProps, output: base + '.png' }));
+  say(`Imagen resumen: ${base}.png`, `Summary card: ${base}.png`);
+}
 const secs = Math.round((Date.now() - t0) / 1000);
 say(`Listo en ${secs} s: ${out}\nCompártelo con #GitWrapped`, `Done in ${secs}s: ${out}\nShare it with #GitWrapped`);
