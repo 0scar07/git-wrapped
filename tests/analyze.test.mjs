@@ -154,3 +154,14 @@ test('un reformateo grande (añade y borra casi lo mismo) no cuenta como commit 
   const d = analyze({ repos: [dir], year: 2026, authors: [ME], lang: 'es', name: 'Dev' });
   assert.notEqual(d.cards.biggest.subject, 'style: renombrar y normalizar');
 });
+
+test('modelos 3D y vectores (.fbx, .svg) no cuentan como código', () => {
+  const dir = path.join(root, 'assets3d');
+  const c = makeRepo(dir);
+  c('src/main.cs', 'void A(){}\n'.repeat(40), 'feat: script', '2026-04-01T10:00:00+00:00');
+  c('Assets/Models/arbol.fbx', 'v 1 2 3\n'.repeat(4000), 'feat: arte de Kenney', '2026-04-02T10:00:00+00:00');
+  c('Assets/ui/icono.svg', '<path/>\n'.repeat(500), 'feat: iconos', '2026-04-03T10:00:00+00:00');
+  const d = analyze({ repos: [dir], year: 2026, authors: [ME], lang: 'es', name: 'Dev' });
+  assert.equal(d.cards.biggest.subject, 'feat: script');
+  assert.equal(d.totals.insertions, 40);
+});

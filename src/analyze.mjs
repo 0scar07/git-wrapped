@@ -29,6 +29,8 @@ const IGNORE = new RegExp([
   /\.min\.(js|css)$|\.map$|[-.][0-9a-f]{8,}\.(js|mjs|css)$/.source,
   // archivos de motores de juego y datos serializados (Unity, Godot, Xcode…)
   /\.(unity|prefab|asset|meta|mat|anim|controller|overrideController|physicMaterial|lighting|tres|import|pbxproj|xcworkspacedata|snap|csv|tsv)$/.source,
+  // modelos 3D, vectores y otros assets en texto
+  /\.(fbx|obj|mtl|gltf|dae|ply|stl|svg|lottie|ipynb)$/i.source,
 ].join('|'));
 // Un archivo con más de 10 000 líneas cambiadas en un solo commit casi siempre es generado.
 const HUGE = 10_000;
