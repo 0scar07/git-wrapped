@@ -52,7 +52,7 @@ before(() => {
   writeFileSync(path.join(root, 'no-es-repo.txt'), 'hola');
 });
 
-after(() => process.env.KEEP ? console.log("ROOT", root) : rmSync(root, { recursive: true, force: true }));
+after(() => rmSync(root, { recursive: true, force: true }));
 
 const run = (repos, authors = [ME]) => analyze({ repos, year: 2026, authors, lang: 'es', name: 'Dev' });
 
