@@ -45,7 +45,7 @@ if (o.help) {
   console.log(`
   git-wrapped ${pkg.version}
 
-  ${es ? 'Uso' : 'Usage'}:  npx git-wrapped [${es ? 'rutas' : 'paths'}...] [opciones]
+  ${es ? 'Uso' : 'Usage'}:  npx git-wrapped-video [${es ? 'rutas' : 'paths'}...] [opciones]
 
   --scan <dir>        ${es ? 'Busca repos de git dentro de una carpeta (2 niveles)' : 'Find git repos inside a folder (2 levels deep)'}
   --year <aaaa>       ${es ? 'Año a analizar (por defecto, el actual)' : 'Year to analyze (default: current)'}

@@ -13,7 +13,7 @@ body:
     id: command
     attributes:
       label: Command you ran
-      placeholder: npx git-wrapped --scan ~/code
+      placeholder: npx git-wrapped-video --scan ~/code
     validations:
       required: true
   - type: textarea

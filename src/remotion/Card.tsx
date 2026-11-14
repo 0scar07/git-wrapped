@@ -69,7 +69,7 @@ export const Card: React.FC<Props> = ({ data }) => {
             <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 17, color: '#8A8A99', fontWeight: 500 }}>{s.makeYours}</span>
               <span style={{ fontFamily: mono, fontSize: 22, padding: '10px 18px', borderRadius: 12, background: '#14141c', border: '1px solid #24242F' }}>
-                <span style={{ color: '#8A8A99' }}>$ </span>npx <span style={{ color: '#9D8CFF' }}>git-wrapped</span>
+                <span style={{ color: '#8A8A99' }}>$ </span>npx <span style={{ color: '#9D8CFF' }}>git-wrapped-video</span>
               </span>
             </div>
           </div>

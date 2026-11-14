@@ -216,7 +216,7 @@ const Scene: React.FC<{ data: Props['data'] }> = ({ data }) => {
         {/* K */}
         <div className="el" style={S({ x: wordX + L(-60, 0, kK), y: -100, o: up(t, 15.35, 15.8) })}><h1 style={{ fontSize: 116, letterSpacing: -4 }}>{WORDMARK}</h1></div>
         <div className="el" style={S({ y: L(60, 40, up(t, 15.6, 16)), o: up(t, 15.6, 16) })}><div style={{ fontSize: V ? 44 : 54, fontWeight: 700, letterSpacing: -1, whiteSpace: 'nowrap' }}>{s.tag1(data.year)} <span className="acc">{s.tag2}</span></div></div>
-        <div className="el" style={S({ y: L(180, 160, up(t, 15.85, 16.25)), o: up(t, 15.85, 16.25) })}><div className="cmd"><span className="sub">$ </span>npx <span className="acc">git-wrapped</span></div></div>
+        <div className="el" style={S({ y: L(180, 160, up(t, 15.85, 16.25)), o: up(t, 15.85, 16.25) })}><div className="cmd"><span className="sub">$ </span>npx <span className="acc">git-wrapped-video</span></div></div>
 
         {/* terminal */}
         <div className="el" style={S({ y: L(HH + 60, HH - 80, up(t, 1.9, 2.3)), s: V ? 0.76 : 1, o: up(t, 1.9, 2.3) * (1 - up(t, 12.15, 12.45)) })}>

@@ -6,7 +6,7 @@
 
 Un solo comando lee tu historial de commits y genera un MP4 para compartir al estilo Wrapped: tus repos top, tus lenguajes, tus moods de programación, tu gráfica de contribuciones, tu racha más larga, tu hora pico y más. Con banda sonora propia.
 
-[![npm](https://img.shields.io/npm/v/git-wrapped?color=9D8CFF&label=npm)](https://www.npmjs.com/package/git-wrapped)
+[![npm](https://img.shields.io/npm/v/git-wrapped-video?color=9D8CFF&label=npm)](https://www.npmjs.com/package/git-wrapped-video)
 [![CI](https://github.com/0scar07/git-wrapped/actions/workflows/ci.yml/badge.svg)](https://github.com/0scar07/git-wrapped/actions/workflows/ci.yml)
 [![licencia](https://img.shields.io/badge/licencia-MIT-9D8CFF)](LICENSE)
 [![node](https://img.shields.io/badge/node-%3E%3D18.17-9D8CFF)](https://nodejs.org)
@@ -22,7 +22,7 @@ Un solo comando lee tu historial de commits y genera un MP4 para compartir al es
 ## Empieza
 
 ```bash
-npx git-wrapped
+npx git-wrapped-video
 ```
 
 Ejecútalo dentro de cualquier repositorio de git. El video se guarda como `git-wrapped-<año>.mp4`.
@@ -30,8 +30,10 @@ Ejecútalo dentro de cualquier repositorio de git. El video se guarda como `git-
 ¿Tienes varios proyectos? Apúntalo a la carpeta que los contiene:
 
 ```bash
-npx git-wrapped --scan ~/code
+npx git-wrapped-video --scan ~/code
 ```
+
+¿Lo usas seguido? Instálalo una vez con `npm i -g git-wrapped-video` y ejecuta `git-wrapped` desde cualquier carpeta.
 
 **Tu código nunca sale de tu computadora.** Solo se lee `git log` en local. No se sube nada y no hace falta cuenta ni token.
 
@@ -86,7 +88,7 @@ Junto a cada video también obtienes:
 ### Para TikTok, Reels y Shorts
 
 ```bash
-npx git-wrapped --vertical
+npx git-wrapped-video --vertical
 ```
 
 Las mismas escenas, acomodadas para una pantalla de 1080×1920.

@@ -28,7 +28,7 @@ jobs:
         run: |
           v=$(node -p "require('./package.json').version")
           if [ -z "$NPM_TOKEN" ]; then echo "No NPM_TOKEN secret: skipping"; echo "go=false" >> "$GITHUB_OUTPUT"
-          elif npm view "git-wrapped@$v" version >/dev/null 2>&1; then echo "$v is already on npm: skipping"; echo "go=false" >> "$GITHUB_OUTPUT"
+          elif npm view "git-wrapped-video@$v" version >/dev/null 2>&1; then echo "$v is already on npm: skipping"; echo "go=false" >> "$GITHUB_OUTPUT"
           else echo "go=true" >> "$GITHUB_OUTPUT"; fi
       - if: steps.check.outputs.go == 'true'
         run: npm ci
