@@ -1,6 +1,6 @@
 {
   "name": "git-wrapped-video",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Your year in git as an 18-second Wrapped-style video. Tu año en git, en un video.",
   "type": "module",
   "bin": {

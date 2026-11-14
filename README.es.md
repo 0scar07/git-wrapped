@@ -37,7 +37,7 @@ npx git-wrapped-video --scan ~/code
 
 **Tu código nunca sale de tu computadora.** Solo se lee `git log` en local. No se sube nada y no hace falta cuenta ni token.
 
-**Requisitos:** Node.js 18.17+ y git. La primera vez se descarga un Chrome sin interfaz para renderizar (una sola vez).
+**Requisitos:** Node.js 18.17+ y git. La primera vez tarda un par de minutos: npx instala el renderizador y descarga un Chrome sin interfaz (solo una vez).
 
 ## Qué sale en el video
 

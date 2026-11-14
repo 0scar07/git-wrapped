@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 · 2026-11-14
+
+- Fix: in the closing card the logo could overlap the name, because the text was measured before the Inter font finished loading.
+- The npm package is now called `git-wrapped-video` (`npx git-wrapped-video`). Installed globally, it also gives you the `git-wrapped` command.
+
 ## 0.1.0 · 2026-11-14
 
 First release.

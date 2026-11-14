@@ -1,5 +1,5 @@
-import React, { CSSProperties, useMemo } from 'react';
-import { AbsoluteFill, Audio, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
+import React, { CSSProperties, useEffect, useMemo, useState } from 'react';
+import { AbsoluteFill, Audio, continueRender, delayRender, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { loadFont as loadInter } from '@remotion/google-fonts/Inter';
 import { loadFont as loadMono } from '@remotion/google-fonts/JetBrainsMono';
 import { measureText } from '@remotion/layout-utils';
@@ -9,7 +9,21 @@ import { fmt, strings } from './strings';
 const WORDMARK = 'git wrapped';
 import type { Props } from './types';
 
-const inter = loadInter('normal', { weights: ['400', '500', '600', '700', '800'], subsets: ['latin', 'latin-ext'] }).fontFamily;
+const interFont = loadInter('normal', { weights: ['400', '500', '600', '700', '800'], subsets: ['latin', 'latin-ext'] });
+const inter = interFont.fontFamily;
+
+// Mide el ancho del nombre solo cuando Inter ya cargó (si no, mide con la fuente de reserva y el cierre se descuadra).
+function useWordmarkWidth() {
+  const [w, setW] = useState<number | null>(null);
+  const [handle] = useState(() => delayRender('Midiendo el nombre con Inter'));
+  useEffect(() => {
+    interFont.waitUntilDone().then(() => document.fonts.ready).then(() => {
+      setW(measureText({ text: WORDMARK, fontFamily: inter, fontSize: 116, fontWeight: '800', letterSpacing: '-4px', validateFontIsLoaded: true }).width);
+      continueRender(handle);
+    }).catch(() => { setW(620); continueRender(handle); });
+  }, [handle]);
+  return w ?? 620;
+}
 const mono = loadMono('normal', { weights: ['400', '500'], subsets: ['latin', 'latin-ext'] }).fontFamily;
 
 // --- curvas: suaves, sin rebote -------------------------------------------
@@ -103,7 +117,7 @@ const Scene: React.FC<{ data: Props['data'] }> = ({ data }) => {
   // K
   const kG = up(t, 14.45, 15), kK = up(t, 15.2, 15.7);
   // cierre: logo + nombre centrados como un solo bloque, mida lo que mida el texto
-  const wordW = measureText({ text: WORDMARK, fontFamily: inter, fontSize: 116, fontWeight: '800', letterSpacing: '-4px' }).width;
+  const wordW = useWordmarkWidth();
   const blockW = 150 + 40 + wordW;
   const logoEndX = -blockW / 2 + 75, wordX = -blockW / 2 + 190 + wordW / 2;
   // terminal

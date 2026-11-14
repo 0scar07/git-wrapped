@@ -37,7 +37,7 @@ Use it often? Install it once with `npm i -g git-wrapped-video` and run `git-wra
 
 **Your code never leaves your machine.** It only reads `git log` locally. Nothing is uploaded, and no account or token is needed.
 
-**Requirements:** Node.js 18.17+ and git. The first run downloads a headless Chrome for rendering (once).
+**Requirements:** Node.js 18.17+ and git. The first run takes a couple of minutes: npx installs the renderer and downloads a headless Chrome (only once).
 
 ## What's in the video
 
