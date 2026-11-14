@@ -1,0 +1,110 @@
+name: git wrapped
+description: Your year in git as an 18-second Wrapped-style video, GIF and card, right on your GitHub profile README.
+author: 0scar07
+branding:
+  icon: film
+  color: purple
+
+inputs:
+  user:
+    description: GitHub user to wrap. Defaults to the owner of the repository running the workflow.
+    default: ${{ github.repository_owner }}
+  year:
+    description: Year to wrap. Defaults to the current year (the previous one in January).
+    default: ''
+  lang:
+    description: Video language, en or es.
+    default: en
+  token:
+    description: >-
+      GitHub token. The default only sees public repos. To include private ones,
+      pass a personal access token (read-only, "Contents" + "Metadata") stored as a secret.
+    default: ${{ github.token }}
+  max-repos:
+    description: How many of your most recently pushed repos to analyze.
+    default: '15'
+  output-dir:
+    description: Folder (inside the repo) where the video, GIF, card and data are saved.
+    default: git-wrapped
+  readme:
+    description: README to update between <!-- git-wrapped:start --> and <!-- git-wrapped:end -->. Empty to skip.
+    default: README.md
+  vertical:
+    description: Also render a vertical 9:16 video for TikTok, Reels and Shorts.
+    default: 'false'
+  commit:
+    description: Commit and push the results.
+    default: 'true'
+  commit-message:
+    description: Commit message.
+    default: 'chore: update git wrapped'
+
+outputs:
+  video:
+    description: Path of the MP4.
+    value: ${{ steps.render.outputs.video }}
+  gif:
+    description: Path of the GIF.
+    value: ${{ steps.render.outputs.gif }}
+  card:
+    description: Path of the PNG card.
+    value: ${{ steps.render.outputs.card }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install git wrapped
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci --omit=dev --no-audit --no-fund
+
+    - name: Render
+      id: render
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        GW_USER: ${{ inputs.user }}
+        GW_YEAR: ${{ inputs.year }}
+        GW_LANG: ${{ inputs.lang }}
+        GW_MAX: ${{ inputs.max-repos }}
+        GW_DIR: ${{ inputs.output-dir }}
+        GW_README: ${{ inputs.readme }}
+        GW_VERTICAL: ${{ inputs.vertical }}
+      run: |
+        set -euo pipefail
+        year="${GW_YEAR:-}"
+        if [ -z "$year" ]; then
+          if [ "$(date -u +%m)" = "01" ]; then year=$(( $(date -u +%Y) - 1 )); else year=$(date -u +%Y); fi
+        fi
+        mkdir -p "$GW_DIR"
+        cli="${{ github.action_path }}/bin/cli.mjs"
+        args=(--github "$GW_USER" --year "$year" --lang "$GW_LANG" --max-repos "$GW_MAX" -o "$GW_DIR/wrapped-$year.mp4" --gif)
+        if [ -n "$GW_README" ]; then args+=(--readme "$GW_README"); fi
+        node "$cli" "${args[@]}"
+        if [ "$GW_VERTICAL" = "true" ]; then
+          node "$cli" --data "$GW_DIR/wrapped-$year.json" --vertical --no-card -o "$GW_DIR/wrapped-$year-vertical.mp4"
+        fi
+        echo "video=$GW_DIR/wrapped-$year.mp4" >> "$GITHUB_OUTPUT"
+        echo "gif=$GW_DIR/wrapped-$year.gif" >> "$GITHUB_OUTPUT"
+        echo "card=$GW_DIR/wrapped-$year.png" >> "$GITHUB_OUTPUT"
+
+    - name: Commit
+      if: inputs.commit == 'true'
+      shell: bash
+      env:
+        GW_DIR: ${{ inputs.output-dir }}
+        GW_README: ${{ inputs.readme }}
+        GW_MSG: ${{ inputs.commit-message }}
+      run: |
+        set -euo pipefail
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add "$GW_DIR"
+        if [ -n "$GW_README" ] && [ -f "$GW_README" ]; then git add "$GW_README"; fi
+        if git diff --cached --quiet; then echo "Nothing changed"; exit 0; fi
+        git commit -m "$GW_MSG"
+        git push

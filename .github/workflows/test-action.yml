@@ -1,0 +1,44 @@
+name: Test the action
+
+# Prueba la Action de este repo de punta a punta, sin hacer commit.
+on:
+  workflow_dispatch:
+    inputs:
+      user:
+        description: GitHub user to wrap
+        default: 0scar07
+  pull_request:
+    paths: [action.yml, src/github.mjs, src/readme.mjs, bin/cli.mjs]
+
+permissions:
+  contents: read
+
+jobs:
+  action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fake profile README
+        run: printf '# Hi\n\nSome intro.\n' > PROFILE.md
+      - uses: ./
+        id: wrapped
+        with:
+          user: ${{ inputs.user || '0scar07' }}
+          readme: PROFILE.md
+          output-dir: out
+          commit: 'false'
+      - name: Check results
+        run: |
+          ls -la out
+          test -s "${{ steps.wrapped.outputs.video }}"
+          test -s "${{ steps.wrapped.outputs.gif }}"
+          test -s "${{ steps.wrapped.outputs.card }}"
+          grep -q 'git-wrapped:start' PROFILE.md
+          cat PROFILE.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wrapped
+          path: |
+            out/
+            PROFILE.md
+          retention-days: 7

@@ -44,6 +44,10 @@ before(() => {
   // Commit grande (con lockfile que se ignora)
   a('src/big.ts', 'line\n'.repeat(500), 'refactor: archivo grande', '2026-05-02T23:00:00+00:00');
   a('package-lock.json', '{}\n'.repeat(5000), 'chore: lockfile', '2026-05-03T23:00:00+00:00');
+  // Generados que no deben contar: escena de Unity, bundle con hash y un archivo gigante
+  a('Assets/Scenes/nivel.unity', 'x\n'.repeat(300), 'feat: escena', '2026-05-04T10:00:00+00:00');
+  a('web/static/AppEntry-3f8b8a662770.js', 'y\n'.repeat(300), 'build: bundle', '2026-05-04T11:00:00+00:00');
+  a('data/huge.ts', 'z\n'.repeat(12000), 'chore: datos generados', '2026-05-04T12:00:00+00:00');
   // De otro autor y de otro año: no cuentan
   a('src/app.ts', 'd\n', 'feat: ajeno', '2026-06-01T12:00:00+00:00', OTHER);
   a('src/app.ts', 'e\n', 'feat: año pasado', '2025-12-31T12:00:00+00:00');
@@ -58,13 +62,13 @@ const run = (repos, authors = [ME]) => analyze({ repos, year: 2026, authors, lan
 
 test('cuenta solo los commits del autor en ese año', () => {
   const d = run([repoA]);
-  assert.equal(d.totals.commits, 7);
+  assert.equal(d.totals.commits, 10);
   assert.equal(d.year, 2026);
   assert.equal(d.user.name, 'Dev');
 });
 
 test('sin autores cuenta a todos', () => {
-  assert.equal(run([repoA], []).totals.commits, 8);
+  assert.equal(run([repoA], []).totals.commits, 11);
 });
 
 test('racha más larga y mejor día', () => {
@@ -104,7 +108,7 @@ test('con un solo repo muestra carpetas', () => {
 
 test('con varios repos muestra repos y suma todo', () => {
   const d = run([repoA, repoB]);
-  assert.equal(d.totals.commits, 8);
+  assert.equal(d.totals.commits, 11);
   assert.ok(d.repos.some(r => r.name === 'beta'));
   assert.ok(d.languages.some(l => l.name === 'Go'));
 });
@@ -114,7 +118,7 @@ test('gráfica de 52 semanas y días de la semana', () => {
   assert.equal(d.graph.length, 364);
   assert.ok(d.graph.every(v => v >= 0 && v <= 4));
   assert.equal(d.weekdays.length, 7);
-  assert.equal(d.weekdays.reduce((a, b) => a + b, 0), 7);
+  assert.equal(d.weekdays.reduce((a, b) => a + b, 0), 10);
   assert.equal(d.log.length > 0, true);
 });
 
@@ -126,4 +130,16 @@ test('findRepos encuentra repos anidados y isRepo descarta carpetas sueltas', ()
   const found = findRepos(root).map(p => path.basename(p)).sort();
   assert.deepEqual(found, ['alpha', 'beta']);
   assert.equal(isRepo(root), false);
+});
+
+test('ignora archivos generados: Unity, bundles con hash y cambios gigantes', () => {
+  const d = run([repoA]);
+  assert.equal(d.cards.biggest.add, 500);
+  assert.equal(d.totals.insertions < 1000, true);
+  assert.ok(!d.languages.some(l => l.name === 'Unknown'));
+});
+
+test('emails con "+" de GitHub se comparan literalmente', () => {
+  const d = analyze({ repos: [repoA], year: 2026, authors: ['DEV@EXAMPLE.COM', '123+dev@users.noreply.github.com'], lang: 'es', name: 'Dev' });
+  assert.equal(d.totals.commits, 10);
 });

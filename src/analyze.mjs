@@ -20,7 +20,18 @@ export const LANG_COLORS = {
   HTML: '#FF9F6E', Markdown: '#C8C8D4', Shell: '#8BE38B', PowerShell: '#6FA8FF', Dart: '#5EC8F0',
   Lua: '#8C9CFF', GDScript: '#7FB8E0', SQL: '#FFC97A', Elixir: '#B58BFF', Zig: '#FFB45E', Scala: '#FF7A7A', R: '#7AA8FF',
 };
-const IGNORE = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|Cargo\.lock|poetry\.lock|composer\.lock|Gemfile\.lock|go\.sum)$|(^|\/)(node_modules|dist|build|vendor|\.next|coverage)\/|\.min\.(js|css)$|\.map$/;
+const IGNORE = new RegExp([
+  // lockfiles
+  /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|Cargo\.lock|poetry\.lock|composer\.lock|Gemfile\.lock|go\.sum|uv\.lock)$/.source,
+  // carpetas de build y dependencias
+  /(^|\/)(node_modules|dist|build|out|vendor|\.next|\.nuxt|\.expo|_expo|coverage|Library|Temp|obj|\.godot)\//.source,
+  // minificados, mapas y bundles con hash en el nombre (AppEntry-3f8b8a66….js)
+  /\.min\.(js|css)$|\.map$|[-.][0-9a-f]{8,}\.(js|mjs|css)$/.source,
+  // archivos de motores de juego y datos serializados (Unity, Godot, Xcode…)
+  /\.(unity|prefab|asset|meta|mat|anim|controller|overrideController|physicMaterial|lighting|tres|import|pbxproj|xcworkspacedata|snap|csv|tsv)$/.source,
+].join('|'));
+// Un archivo con más de 10 000 líneas cambiadas en un solo commit casi siempre es generado.
+const HUGE = 10_000;
 
 const git = (cwd, args) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8', maxBuffer: 1 << 29 });
 
@@ -54,6 +65,8 @@ function readCommits(repo, year, authors) {
   // Sin --since/--until: git deja de recorrer el historial en cuanto ve un commit más antiguo,
   // y con fechas desordenadas (rebase, cherry-pick) se perderían commits. Se filtra por fecha de autor abajo.
   const args = ['log', '--branches', '--remotes', '--tags', '--no-merges', '--format=%x1e%H%x1f%at%x1f%s', '--numstat'];
+  // emails como texto literal (los de GitHub llevan "+" y ".") y sin distinguir mayúsculas
+  if (authors.length) args.push('--fixed-strings', '--regexp-ignore-case');
   for (const a of authors) args.push(`--author=${a}`);
   let raw = '';
   try { raw = git(repo, args); } catch { return []; }
@@ -67,7 +80,7 @@ function readCommits(repo, year, authors) {
       let p = m[3];
       const ren = p.match(/^(.*)\{.* => (.*)\}(.*)$/); if (ren) p = (ren[1] + ren[2] + ren[3]).replace(/\/\//g, '/');
       else if (p.includes(' => ')) p = p.split(' => ')[1];
-      if (IGNORE.test(p)) continue;
+      if (IGNORE.test(p) || +m[1] + +m[2] > HUGE) continue;
       files.push({ add: +m[1], del: +m[2], path: p });
     }
     return { repo, hash, at: +at * 1000, subject: subject || '', files };
