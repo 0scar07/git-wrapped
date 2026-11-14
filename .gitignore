@@ -1,0 +1,4 @@
+node_modules/
+*.mp4
+git-wrapped-*.json
+out/

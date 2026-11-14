@@ -1,0 +1,41 @@
+{
+  "lang": "es",
+  "year": 2026,
+  "user": { "name": "devmaria" },
+  "totals": { "commits": 695, "activeDays": 214, "insertions": 48210, "deletions": 21934 },
+  "reposLabel": "repos",
+  "repos": [
+    { "name": "nebula-api", "commits": 412, "cover": 0 },
+    { "name": "pixel-forge", "commits": 187, "cover": 1 },
+    { "name": "dotfiles", "commits": 96, "cover": 2 }
+  ],
+  "languages": [
+    { "name": "TypeScript", "pct": 58, "color": "#9D8CFF" },
+    { "name": "Rust", "pct": 21, "color": "#FF9F6E" },
+    { "name": "Python", "pct": 13, "color": "#5EE6D0" },
+    { "name": "Go", "pct": 8, "color": "#6FD3FF" }
+  ],
+  "moods": ["night", "early", "weekend", "refactor", "bugs"],
+  "star": { "name": "nebula-api", "commits": 412, "activeDays": 168, "insertions": 31240 },
+  "graph": [],
+  "weekdays": [62, 78, 70, 88, 54, 30, 41],
+  "streak": { "days": 23, "start": "2026-03-03", "end": "2026-03-25" },
+  "cards": {
+    "file": { "path": "src/router.ts", "count": 94 },
+    "peak": { "hour": 1 },
+    "biggest": { "add": 2184, "del": 903, "subject": "refactor: nuevo motor de caché" },
+    "bestDay": { "date": "2026-03-14", "count": 37 }
+  },
+  "log": [
+    { "hash": "a3f9c2e", "msg": "feat: caché en memoria para /v2/search" },
+    { "hash": "91be0d4", "msg": "fix: timeout en el cliente de WebSockets" },
+    { "hash": "4c7d1aa", "msg": "refactor: nuevo motor de caché" },
+    { "hash": "e02f8b3", "msg": "docs: ejemplos del SDK" },
+    { "hash": "7d61c09", "msg": "feat: rate limit por token" },
+    { "hash": "b8a2e55", "msg": "test: casos de reconexión" },
+    { "hash": "0f3c9de", "msg": "perf: 3x menos memoria en el router" },
+    { "hash": "c55e1b7", "msg": "feat: métricas en /health" },
+    { "hash": "2ad94f0", "msg": "fix: race condition en la cola" },
+    { "hash": "6e8b3c2", "msg": "chore: release v2.4.0" }
+  ]
+}

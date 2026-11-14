@@ -1,0 +1,45 @@
+{
+  "name": "git-wrapped",
+  "version": "0.1.0",
+  "description": "Your year in git as an 18-second Wrapped-style video. Tu año en git, en un video.",
+  "type": "module",
+  "bin": {
+    "git-wrapped": "bin/cli.mjs"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "studio": "remotion studio src/remotion/index.ts",
+    "demo": "node bin/cli.mjs --demo",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "git",
+    "wrapped",
+    "remotion",
+    "video",
+    "cli",
+    "github",
+    "year-in-review"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.543",
+    "@remotion/cli": "4.0.543",
+    "@remotion/google-fonts": "4.0.543",
+    "@remotion/layout-utils": "4.0.543",
+    "@remotion/renderer": "4.0.543",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.543"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2"
+  }
+}
